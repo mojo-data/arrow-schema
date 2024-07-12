@@ -154,10 +154,11 @@ struct Builder:
 
     fn prepend(inout self, s: String) -> Offset:
         self.start_nesting()
-        var bytes = len(s)
+        var bytes = s.byte_length()
         self.prep(4, bytes + 1)
         self.head += bytes + 1
         memcpy(self.buf.offset(self.start()), s.unsafe_ptr(), bytes)
+        self.buf[self.start() + bytes] = 0
         _ = s
         return self.end_vector(bytes)
 
@@ -176,7 +177,7 @@ struct Builder:
             var vt2_start = self.capacity - vt2_offset[]
             var vt2_len = self.buf.offset(vt2_start).bitcast[DType.int16]()[0]
             if vtable_size == vt2_len 
-                and memcmp(self.buf.offset(self.start()), self.buf.offset(vt2_start), int(vt2_len)) == 0:
+                and memcmp(self.buf.offset(self.start() + 2), self.buf.offset(vt2_start + 2), int(vt2_len)) == 0:
                 existing_vtable = vt2_offset[]
                 break
         if existing_vtable:
@@ -188,7 +189,7 @@ struct Builder:
         return Offset(object_offset)
 
     fn finish(owned self, root_table: Offset, /, size_prefixed: Bool = False, file_identifier: Optional[String] = None) -> Tuple[DTypePointer[DType.uint8], Int]:
-        debug_assert(not self.nested, "should be nested")
+        debug_assert(not self.nested, "should not be nested")
         var prep_size = 4
         if file_identifier:
             prep_size += 4
@@ -197,7 +198,7 @@ struct Builder:
         self.prep(self.minalign, prep_size)
         if file_identifier:
             var fid = file_identifier.or_else("    ")
-            debug_assert(len(fid) == 4, "file identifier shoudl be of size 4")
+            debug_assert(len(fid) == 4, "file identifier should be of size 4")
             self.head += 4
             memcpy(self.buf.offset(self.start()), fid.unsafe_ptr(), 4)
             _= fid
