@@ -37,10 +37,11 @@ def test_building_and_reading_a_footer():
     var result = builder^.finish(o_footer)
     var bytes = result.get[0, DTypePointer[DType.uint8]]()
 
-    # var size = result.get[1, Int]()
-    # for i in range(size):
-    #     print(bytes[i], end=", " if i == 0 or (i % 4) != 3 else "\n")
-    # print()
+    var size = result.get[1, Int]()
+    print("Resulting buffer:")
+    for i in range(size):
+        print(bytes[i], end=", " if (i % 4) != 3 else "\n")
+    print()
 
     var footer = Footer.as_root(bytes)
     assert_true(footer.version() == MetadataVersion.V1)
