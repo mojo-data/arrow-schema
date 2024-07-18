@@ -1,4 +1,4 @@
-from flatbuffers import Builder
+from flatbuffers import *
 from arrow_schema.File_generated import *
 from testing import *
 
@@ -7,10 +7,16 @@ def test_building_and_reading_a_footer():
     var builder = Builder()
     var o_int_type = Int_.build(builder, bitWidth=16, is_signed=True)
     var o_field1 = Field.build(
-        builder, name=str("int_field1"), type_type=Type.Int_, type=o_int_type
+        builder,
+        name=StringRef("int_field1"),
+        type_type=Type.Int_,
+        type=o_int_type,
     )
     var o_field2 = Field.build(
-        builder, name=str("int_field2"), type_type=Type.Int_, type=o_int_type
+        builder,
+        name=StringRef("int_field2"),
+        type_type=Type.Int_,
+        type=o_int_type,
     )
     var o_schema = Schema.build(
         builder,
@@ -23,9 +29,15 @@ def test_building_and_reading_a_footer():
     _ = Block.build(builder, offset=20, metaDataLength=10, bodyLength=100)
     var o_blocks = builder.end_vector(2)
 
-    var o_md1 = KeyValue.build(builder, key=str("a"), value=str(12))
-    var o_md2 = KeyValue.build(builder, key=str("b"), value=str(24))
-    var o_md3 = KeyValue.build(builder, key=str("c"), value=str(64))
+    var o_md1 = KeyValue.build(
+        builder, key=StringRef("a"), value=StringRef("12")
+    )
+    var o_md2 = KeyValue.build(
+        builder, key=StringRef("b"), value=StringRef("24")
+    )
+    var o_md3 = KeyValue.build(
+        builder, key=StringRef("c"), value=StringRef("64")
+    )
 
     var o_footer = Footer.build(
         builder,
@@ -35,15 +47,14 @@ def test_building_and_reading_a_footer():
     )
 
     var result = builder^.finish(o_footer)
-    var bytes = result.get[0, DTypePointer[DType.uint8]]()
 
-    var size = result.get[1, Int]()
+    var size = len(result)
     print("Resulting buffer:")
     for i in range(size):
-        print(bytes[i], end=", " if (i % 4) != 3 else "\n")
+        print(result[i], end=", " if (i % 4) != 3 else "\n")
     print()
 
-    var footer = Footer.as_root(bytes)
+    var footer = Footer.as_root(result.unsafe_ptr())
     assert_true(footer.version() == MetadataVersion.V1)
     assert_equal(footer.custom_metadata_length(), 3)
     assert_equal(footer.custom_metadata(0).key(), "a")
@@ -77,4 +88,4 @@ def test_building_and_reading_a_footer():
     assert_equal(schema.fields(1).type_as_Int().bitWidth(), 16)
     assert_equal(schema.fields(1).type_as_Int().is_signed(), True)
 
-    _ = bytes
+    _ = result^

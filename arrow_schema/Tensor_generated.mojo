@@ -8,8 +8,8 @@ from .Schema_generated import *
 #  Shape data for a single axis in a tensor
 @value
 struct TensorDim:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Length of dimension
     fn size(self) -> Int64:
@@ -20,15 +20,15 @@ struct TensorDim:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> TensorDim:
-        return TensorDim(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> TensorDim:
+        return TensorDim(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
         inout builder: flatbuffers.Builder,
         *,
         size: Int64 = 0,
-        name: Optional[String] = None,
+        name: Optional[StringRef] = None,
     ) -> flatbuffers.Offset:
         var _name: Optional[flatbuffers.Offset] = None
         if name is not None:
@@ -45,8 +45,8 @@ struct TensorDim:
 
 @value
 struct Tensor:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn type_type(self) -> Type:
         return flatbuffers.field[DType.uint8](self._buf, int(self._pos), 4, 0)
@@ -214,7 +214,7 @@ struct Tensor:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 8
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return TensorDim(self._buf, start)
 
     fn shape_length(self) -> Int:
@@ -237,8 +237,8 @@ struct Tensor:
         return Buffer(self._buf, o.take())
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Tensor:
-        return Tensor(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Tensor:
+        return Tensor(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -248,7 +248,7 @@ struct Tensor:
         type: Optional[flatbuffers.Offset] = None,
         shape: List[flatbuffers.Offset] = List[flatbuffers.Offset](),
         strides: List[Int64] = List[Int64](),
-        data: Optional[flatbuffers.Offset] = None,
+        data: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         var _shape: Optional[flatbuffers.Offset] = None
         if len(shape) > 0:
@@ -278,6 +278,10 @@ struct Tensor:
             builder.prepend(_strides.value())
             builder.slot(3)
         if data is not None:
-            builder.prepend(data.value())
+            Buffer.build(
+                builder,
+                offset=data.value().offset,
+                length=data.value().length,
+            )
             builder.slot(4)
         return builder.end_object()

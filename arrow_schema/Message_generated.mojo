@@ -79,8 +79,8 @@ struct MessageHeader(EqualityComparable):
 #  null_count: 0} for its Int16 node, as separate FieldNode structs
 @value
 struct FieldNode:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  The number of value slots in the Arrow array at this level of a nested
     #  tree
@@ -99,11 +99,16 @@ struct FieldNode:
         *,
         length: Int64,
         null_count: Int64,
-    ) -> flatbuffers.Offset:
+    ):
         builder.prep(8, 16)
         builder.prepend[DType.int64](null_count)
         builder.prepend[DType.int64](length)
-        return builder.offset()
+
+
+@value
+struct FieldNodeVO:
+    var null_count: Int64
+    var length: Int64
 
 
 #  Optional compression for the memory buffers constituting IPC message
@@ -111,8 +116,8 @@ struct FieldNode:
 #  message types
 @value
 struct BodyCompression:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Compressor library.
     #  For LZ4_FRAME, each compressed buffer must consist of a single frame.
@@ -124,8 +129,8 @@ struct BodyCompression:
         return flatbuffers.field[DType.int8](self._buf, int(self._pos), 6, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> BodyCompression:
-        return BodyCompression(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> BodyCompression:
+        return BodyCompression(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -149,8 +154,8 @@ struct BodyCompression:
 #  batch".
 @value
 struct RecordBatch:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  number of records / rows. The arrays in the batch should all have this
     #  length
@@ -213,8 +218,8 @@ struct RecordBatch:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> RecordBatch:
-        return RecordBatch(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> RecordBatch:
+        return RecordBatch(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -262,8 +267,8 @@ struct RecordBatch:
 #  flag
 @value
 struct DictionaryBatch:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn id(self) -> Int64:
         return flatbuffers.field[DType.int64](self._buf, int(self._pos), 4, 0)
@@ -281,8 +286,8 @@ struct DictionaryBatch:
         return flatbuffers.field[DType.int8](self._buf, int(self._pos), 8, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> DictionaryBatch:
-        return DictionaryBatch(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> DictionaryBatch:
+        return DictionaryBatch(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -307,8 +312,8 @@ struct DictionaryBatch:
 
 @value
 struct Message:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn version(self) -> MetadataVersion:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
@@ -353,15 +358,15 @@ struct Message:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 12
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Message:
-        return Message(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Message:
+        return Message(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(

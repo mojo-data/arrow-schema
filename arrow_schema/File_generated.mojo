@@ -8,8 +8,8 @@ from .Schema_generated import *
 #
 @value
 struct Footer:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn version(self) -> MetadataVersion:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
@@ -43,15 +43,15 @@ struct Footer:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 12
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Footer:
-        return Footer(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Footer:
+        return Footer(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -91,8 +91,8 @@ struct Footer:
 
 @value
 struct Block:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Index to the start of the RecordBlock (note this is past the Message header)
     fn offset(self) -> Int64:
@@ -114,10 +114,16 @@ struct Block:
         offset: Int64,
         metaDataLength: Int32,
         bodyLength: Int64,
-    ) -> flatbuffers.Offset:
+    ):
         builder.prep(8, 24)
         builder.prepend[DType.int64](bodyLength)
         builder.pad(4)
         builder.prepend[DType.int32](metaDataLength)
         builder.prepend[DType.int64](offset)
-        return builder.offset()
+
+
+@value
+struct BlockVO:
+    var bodyLength: Int64
+    var metaDataLength: Int32
+    var offset: Int64

@@ -1,55 +1,53 @@
 from memory import memcmp
 
-
-@always_inline
-fn indirect(buf: DTypePointer[DType.uint8], pos: Int) -> Int32:
-    return buf.offset(pos).bitcast[DType.int32]()[0]
+alias BufPointer = UnsafePointer[UInt8]
 
 
 @always_inline
-fn read[T: DType](buf: DTypePointer[DType.uint8], pos: Int) -> Scalar[T]:
+fn read_offset_as_int(buf: BufPointer, pos: Int) -> Int:
+    return int(buf.offset(pos).bitcast[DType.int32]()[0])
+
+
+@always_inline
+fn read[T: DType](buf: BufPointer, pos: Int) -> Scalar[T]:
     return buf.offset(pos).bitcast[T]()[0]
 
 
 fn field[
     T: DType
 ](
-    buf: DTypePointer[DType.uint8],
+    buf: BufPointer,
     pos: Int,
     field_offset: Int,
     default: Scalar[T],
-) -> Scalar[T]:
+) -> Scalar[
+    T
+]:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return default
     return buf.offset(int(pos) + relativ_value_offset).bitcast[T]()[0]
 
 
-fn field_table(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> Optional[Int32]:
+fn field_table(buf: BufPointer, pos: Int, field_offset: Int) -> Optional[Int]:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return None
     return (
         pos
         + relativ_value_offset
-        + buf.offset(pos + relativ_value_offset).bitcast[DType.int32]()[0]
+        + int(buf.offset(pos + relativ_value_offset).bitcast[DType.int32]()[0])
     )
 
 
-fn field_struct(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> Optional[Int32]:
+fn field_struct(buf: BufPointer, pos: Int, field_offset: Int) -> Optional[Int]:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return None
     return pos + relativ_value_offset
 
 
-fn field_vector(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> Int:
+fn field_vector(buf: BufPointer, pos: Int, field_offset: Int) -> Int:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return 0
@@ -63,9 +61,7 @@ fn field_vector(
     )
 
 
-fn field_vector_len(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> Int:
+fn field_vector_len(buf: BufPointer, pos: Int, field_offset: Int) -> Int:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return 0
@@ -77,9 +73,7 @@ fn field_vector_len(
     return int(buf.offset(vec_pos).bitcast[DType.int32]()[0])
 
 
-fn field_string(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> StringRef:
+fn field_string(buf: BufPointer, pos: Int, field_offset: Int) -> StringRef:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
         return ""
@@ -93,10 +87,8 @@ fn field_string(
 
 
 @always_inline
-fn _relative_field_offset(
-    buf: DTypePointer[DType.uint8], pos: Int, field_offset: Int
-) -> Int:
-    var relativ_vtable_offset = indirect(buf, pos)
+fn _relative_field_offset(buf: BufPointer, pos: Int, field_offset: Int) -> Int:
+    var relativ_vtable_offset = read_offset_as_int(buf, pos)
     var vtable_pos = pos - relativ_vtable_offset
     return int(buf.offset(vtable_pos + field_offset).bitcast[DType.uint16]()[0])
 
@@ -107,7 +99,7 @@ struct Offset(CollectionElement):
 
 
 struct Builder:
-    var buf: DTypePointer[DType.uint8]
+    var buf: BufPointer
     var capacity: Int
     var head: Int
     var minalign: Int
@@ -117,7 +109,7 @@ struct Builder:
     var nested: Bool
 
     fn __init__(inout self, capacity: Int = 1024):
-        self.buf = DTypePointer[DType.uint8].alloc(capacity)
+        self.buf = BufPointer.alloc(capacity)
         self.capacity = capacity
         self.head = 0
         self.minalign = 1
@@ -137,10 +129,11 @@ struct Builder:
     fn offset(self) -> Offset:
         return Offset(self.head)
 
-    fn sized_copy(self) -> Tuple[DTypePointer[DType.uint8], Int]:
-        var result = DTypePointer[DType.uint8].alloc(self.head)
-        memcpy(result, self.buf.offset(self.start()), self.head)
-        return result, self.head
+    fn sized_copy(self) -> List[UInt8]:
+        var result = List[UInt8](capacity=self.head)
+        result.size = self.head
+        memcpy(result.unsafe_ptr(), self.buf.offset(self.start()), self.head)
+        return result
 
     fn start_nesting(inout self):
         debug_assert(not self.nested, "double nesting")
@@ -178,7 +171,7 @@ struct Builder:
             ):
                 new_capacity *= 2
             var old_buf = self.buf
-            self.buf = DTypePointer[DType.uint8].alloc(new_capacity)
+            self.buf = BufPointer.alloc(new_capacity)
             memcpy(
                 self.buf.offset(new_capacity - self.head),
                 old_buf.offset(self.capacity - self.head),
@@ -211,14 +204,13 @@ struct Builder:
         self.prepend(Int32(num_elements))
         return self.offset()
 
-    fn prepend(inout self, s: String) -> Offset:
+    fn prepend(inout self, s: StringRef) -> Offset:
         self.start_nesting()
-        var bytes = s.byte_length()
+        var bytes = s.length
         self.prep(4, bytes + 1)
         self.head += bytes + 1
         memcpy(self.buf.offset(self.start()), s.unsafe_ptr(), bytes)
         self.buf[self.start() + bytes] = 0
-        _ = s
         return self.end_vector(bytes)
 
     fn end_object(inout self) -> Offset:
@@ -264,7 +256,7 @@ struct Builder:
         /,
         size_prefixed: Bool = False,
         file_identifier: Optional[String] = None,
-    ) -> Tuple[DTypePointer[DType.uint8], Int]:
+    ) -> List[UInt8]:
         debug_assert(not self.nested, "should not be nested")
         var prep_size = 4
         if file_identifier:

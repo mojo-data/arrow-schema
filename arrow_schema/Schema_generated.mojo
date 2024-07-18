@@ -221,12 +221,12 @@ struct Endianness(EqualityComparable):
 #  These are stored in the flatbuffer in the Type union below
 @value
 struct Null:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Null:
-        return Null(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Null:
+        return Null(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -242,12 +242,12 @@ struct Null:
 #  Struct is a reserved word in Flatbuffers
 @value
 struct Struct_:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Struct_:
-        return Struct_(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Struct_:
+        return Struct_(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -260,12 +260,12 @@ struct Struct_:
 
 @value
 struct List_:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> List_:
-        return List_(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> List_:
+        return List_(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -280,12 +280,12 @@ struct List_:
 #  extremely large data values.
 @value
 struct LargeList:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> LargeList:
-        return LargeList(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> LargeList:
+        return LargeList(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -301,12 +301,12 @@ struct LargeList:
 #  list values.
 @value
 struct ListView:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> ListView:
-        return ListView(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> ListView:
+        return ListView(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -321,12 +321,12 @@ struct ListView:
 #  extremely large data values.
 @value
 struct LargeListView:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> LargeListView:
-        return LargeListView(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> LargeListView:
+        return LargeListView(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -339,16 +339,16 @@ struct LargeListView:
 
 @value
 struct FixedSizeList:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Number of list items per value
     fn listSize(self) -> Int32:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> FixedSizeList:
-        return FixedSizeList(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> FixedSizeList:
+        return FixedSizeList(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -390,16 +390,16 @@ struct FixedSizeList:
 #  field must have the same contents as a List.
 @value
 struct Map:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Set to true if the keys within each value are sorted
     fn keysSorted(self) -> Scalar[DType.bool]:
         return flatbuffers.field[DType.int8](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Map:
-        return Map(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Map:
+        return Map(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -420,8 +420,8 @@ struct Map:
 #  for each child `typeIds[offset]` is the id used in the type vector
 @value
 struct Union:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn mode(self) -> UnionMode:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
@@ -436,8 +436,8 @@ struct Union:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 6)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Union:
-        return Union(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Union:
+        return Union(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -465,8 +465,8 @@ struct Union:
 
 @value
 struct Int_:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn bitWidth(self) -> Int32:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 4, 0)
@@ -475,8 +475,8 @@ struct Int_:
         return flatbuffers.field[DType.int8](self._buf, int(self._pos), 6, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Int_:
-        return Int_(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Int_:
+        return Int_(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -497,15 +497,15 @@ struct Int_:
 
 @value
 struct FloatingPoint:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn precision(self) -> Precision:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> FloatingPoint:
-        return FloatingPoint(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> FloatingPoint:
+        return FloatingPoint(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -523,12 +523,12 @@ struct FloatingPoint:
 #  Unicode with UTF-8 encoding
 @value
 struct Utf8:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Utf8:
-        return Utf8(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Utf8:
+        return Utf8(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -542,12 +542,12 @@ struct Utf8:
 #  Opaque binary data
 @value
 struct Binary:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Binary:
-        return Binary(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Binary:
+        return Binary(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -562,12 +562,12 @@ struct Binary:
 #  extremely large data values.
 @value
 struct LargeUtf8:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> LargeUtf8:
-        return LargeUtf8(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> LargeUtf8:
+        return LargeUtf8(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -582,12 +582,12 @@ struct LargeUtf8:
 #  extremely large data values.
 @value
 struct LargeBinary:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> LargeBinary:
-        return LargeBinary(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> LargeBinary:
+        return LargeBinary(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -607,12 +607,12 @@ struct LargeBinary:
 #  must have a corresponding entry in `variadicBufferCounts`.
 @value
 struct Utf8View:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Utf8View:
-        return Utf8View(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Utf8View:
+        return Utf8View(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -632,12 +632,12 @@ struct Utf8View:
 #  must have a corresponding entry in `variadicBufferCounts`.
 @value
 struct BinaryView:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> BinaryView:
-        return BinaryView(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> BinaryView:
+        return BinaryView(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -650,16 +650,16 @@ struct BinaryView:
 
 @value
 struct FixedSizeBinary:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Number of bytes per value
     fn byteWidth(self) -> Int32:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> FixedSizeBinary:
-        return FixedSizeBinary(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> FixedSizeBinary:
+        return FixedSizeBinary(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -676,12 +676,12 @@ struct FixedSizeBinary:
 
 @value
 struct Bool_:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Bool_:
-        return Bool_(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Bool_:
+        return Bool_(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -699,12 +699,12 @@ struct Bool_:
 #  Like list/struct types, the value array can be of any type.
 @value
 struct RunEndEncoded:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> RunEndEncoded:
-        return RunEndEncoded(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> RunEndEncoded:
+        return RunEndEncoded(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -721,8 +721,8 @@ struct RunEndEncoded:
 #  in the Schema.
 @value
 struct Decimal:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Total number of decimal digits
     fn precision(self) -> Int32:
@@ -738,8 +738,8 @@ struct Decimal:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 8, 128)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Decimal:
-        return Decimal(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Decimal:
+        return Decimal(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -770,15 +770,15 @@ struct Decimal:
 #  * Days (32 bits) since the UNIX epoch
 @value
 struct Date:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn unit(self) -> DateUnit:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 1)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Date:
-        return Date(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Date:
+        return Date(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -809,8 +809,8 @@ struct Date:
 #  into Arrow (for example by replacing the value 86400 with 86399).
 @value
 struct Time:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn unit(self) -> TimeUnit:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 1)
@@ -819,8 +819,8 @@ struct Time:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 6, 32)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Time:
-        return Time(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Time:
+        return Time(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -946,8 +946,8 @@ struct Time:
 #  be encoded as timestamp value 0.
 @value
 struct Timestamp:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn unit(self) -> TimeUnit:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
@@ -966,15 +966,15 @@ struct Timestamp:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Timestamp:
-        return Timestamp(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Timestamp:
+        return Timestamp(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
         inout builder: flatbuffers.Builder,
         *,
         unit: TimeUnit = TimeUnit(0),
-        timezone: Optional[String] = None,
+        timezone: Optional[StringRef] = None,
     ) -> flatbuffers.Offset:
         var _timezone: Optional[flatbuffers.Offset] = None
         if timezone is not None:
@@ -991,15 +991,15 @@ struct Timestamp:
 
 @value
 struct Interval:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn unit(self) -> IntervalUnit:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Interval:
-        return Interval(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Interval:
+        return Interval(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -1016,15 +1016,15 @@ struct Interval:
 
 @value
 struct Duration:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn unit(self) -> TimeUnit:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 4, 1)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Duration:
-        return Duration(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Duration:
+        return Duration(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -1044,8 +1044,8 @@ struct Duration:
 #  key namespacing is the responsibility of the user
 @value
 struct KeyValue:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn key(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 4)
@@ -1054,15 +1054,15 @@ struct KeyValue:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> KeyValue:
-        return KeyValue(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> KeyValue:
+        return KeyValue(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
         inout builder: flatbuffers.Builder,
         *,
-        key: Optional[String] = None,
-        value: Optional[String] = None,
+        key: Optional[StringRef] = None,
+        value: Optional[StringRef] = None,
     ) -> flatbuffers.Offset:
         var _key: Optional[flatbuffers.Offset] = None
         if key is not None:
@@ -1082,8 +1082,8 @@ struct KeyValue:
 
 @value
 struct DictionaryEncoding:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  The known dictionary id in the application where this data is used. In
     #  the file or streaming formats, the dictionary ids are found in the
@@ -1113,8 +1113,8 @@ struct DictionaryEncoding:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 10, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> DictionaryEncoding:
-        return DictionaryEncoding(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> DictionaryEncoding:
+        return DictionaryEncoding(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -1146,8 +1146,8 @@ struct DictionaryEncoding:
 #  nested type.
 @value
 struct Field:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Name is not required, in i.e. a List
     fn name(self) -> StringRef:
@@ -1330,7 +1330,7 @@ struct Field:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 14
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return Field(self._buf, start)
 
     fn children_length(self) -> Int:
@@ -1341,21 +1341,21 @@ struct Field:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 16
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 16)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Field:
-        return Field(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Field:
+        return Field(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
         inout builder: flatbuffers.Builder,
         *,
-        name: Optional[String] = None,
+        name: Optional[StringRef] = None,
         nullable: Scalar[DType.bool] = 0,
         type_type: Type = Type(0),
         type: Optional[flatbuffers.Offset] = None,
@@ -1409,8 +1409,8 @@ struct Field:
 #  A Buffer represents a single contiguous memory segment
 @value
 struct Buffer:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  The relative offset into the shared memory page where the bytes for this
     #  buffer starts
@@ -1431,19 +1431,24 @@ struct Buffer:
         *,
         offset: Int64,
         length: Int64,
-    ) -> flatbuffers.Offset:
+    ):
         builder.prep(8, 16)
         builder.prepend[DType.int64](length)
         builder.prepend[DType.int64](offset)
-        return builder.offset()
+
+
+@value
+struct BufferVO:
+    var length: Int64
+    var offset: Int64
 
 
 #  ----------------------------------------------------------------------
 #  A Schema describes the columns in a row batch
 @value
 struct Schema:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  endianness of the buffer
     #  it is Little Endian by default
@@ -1455,7 +1460,7 @@ struct Schema:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 6
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return Field(self._buf, start)
 
     fn fields_length(self) -> Int:
@@ -1465,7 +1470,7 @@ struct Schema:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 8
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
 
     fn custom_metadata_length(self) -> Int:
@@ -1482,8 +1487,8 @@ struct Schema:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 10)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> Schema:
-        return Schema(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> Schema:
+        return Schema(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(

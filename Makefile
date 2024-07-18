@@ -2,6 +2,10 @@
 test: fmt
 	mojo test -I .
 
+.PHONY: checkout
+checkout:
+	./checkout_remote_modules.sh
+
 .PHONY: build
 build: fmt
 	@mkdir -p dist

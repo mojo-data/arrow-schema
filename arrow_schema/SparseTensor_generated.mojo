@@ -67,8 +67,8 @@ struct SparseTensorIndex(EqualityComparable):
 #  the indices may not be sorted, or may have duplicated entries.
 @value
 struct SparseTensorIndexCOO:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  The type of values in indicesBuffer
     fn indicesType(self) -> Int_:
@@ -100,8 +100,8 @@ struct SparseTensorIndexCOO:
         return flatbuffers.field[DType.int8](self._buf, int(self._pos), 10, 0)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> SparseTensorIndexCOO:
-        return SparseTensorIndexCOO(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> SparseTensorIndexCOO:
+        return SparseTensorIndexCOO(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -109,7 +109,7 @@ struct SparseTensorIndexCOO:
         *,
         indicesType: Optional[flatbuffers.Offset] = None,
         indicesStrides: List[Int64] = List[Int64](),
-        indicesBuffer: Optional[flatbuffers.Offset] = None,
+        indicesBuffer: Optional[BufferVO] = None,
         isCanonical: Scalar[DType.bool] = 0,
     ) -> flatbuffers.Offset:
         var _indicesStrides: Optional[flatbuffers.Offset] = None
@@ -127,7 +127,11 @@ struct SparseTensorIndexCOO:
             builder.prepend(_indicesStrides.value())
             builder.slot(1)
         if indicesBuffer is not None:
-            builder.prepend(indicesBuffer.value())
+            Buffer.build(
+                builder,
+                offset=indicesBuffer.value().offset,
+                length=indicesBuffer.value().length,
+            )
             builder.slot(2)
         if isCanonical != 0:
             builder.prepend(isCanonical)
@@ -138,8 +142,8 @@ struct SparseTensorIndexCOO:
 #  Compressed Sparse format, that is matrix-specific.
 @value
 struct SparseMatrixIndexCSX:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  Which axis, row or column, is compressed
     fn compressedAxis(self) -> SparseMatrixCompressedAxis:
@@ -196,8 +200,8 @@ struct SparseMatrixIndexCSX:
         return Buffer(self._buf, o.take())
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> SparseMatrixIndexCSX:
-        return SparseMatrixIndexCSX(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> SparseMatrixIndexCSX:
+        return SparseMatrixIndexCSX(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -207,9 +211,9 @@ struct SparseMatrixIndexCSX:
             0
         ),
         indptrType: Optional[flatbuffers.Offset] = None,
-        indptrBuffer: Optional[flatbuffers.Offset] = None,
+        indptrBuffer: Optional[BufferVO] = None,
         indicesType: Optional[flatbuffers.Offset] = None,
-        indicesBuffer: Optional[flatbuffers.Offset] = None,
+        indicesBuffer: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         builder.start_object(5)
         if compressedAxis != SparseMatrixCompressedAxis(0):
@@ -219,13 +223,21 @@ struct SparseMatrixIndexCSX:
             builder.prepend(indptrType.value())
             builder.slot(1)
         if indptrBuffer is not None:
-            builder.prepend(indptrBuffer.value())
+            Buffer.build(
+                builder,
+                offset=indptrBuffer.value().offset,
+                length=indptrBuffer.value().length,
+            )
             builder.slot(2)
         if indicesType is not None:
             builder.prepend(indicesType.value())
             builder.slot(3)
         if indicesBuffer is not None:
-            builder.prepend(indicesBuffer.value())
+            Buffer.build(
+                builder,
+                offset=indicesBuffer.value().offset,
+                length=indicesBuffer.value().length,
+            )
             builder.slot(4)
         return builder.end_object()
 
@@ -233,8 +245,8 @@ struct SparseMatrixIndexCSX:
 #  Compressed Sparse Fiber (CSF) sparse tensor index.
 @value
 struct SparseTensorIndexCSF:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     #  CSF is a generalization of compressed sparse row (CSR) index.
     #  See [smith2017knl](http://shaden.io/pub-files/smith2017knl.pdf)
@@ -335,8 +347,8 @@ struct SparseTensorIndexCSF:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> SparseTensorIndexCSF:
-        return SparseTensorIndexCSF(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> SparseTensorIndexCSF:
+        return SparseTensorIndexCSF(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -376,8 +388,8 @@ struct SparseTensorIndexCSF:
 
 @value
 struct SparseTensor:
-    var _buf: DTypePointer[DType.uint8]
-    var _pos: Int32
+    var _buf: UnsafePointer[UInt8]
+    var _pos: Int
 
     fn type_type(self) -> Type:
         return flatbuffers.field[DType.uint8](self._buf, int(self._pos), 4, 0)
@@ -546,7 +558,7 @@ struct SparseTensor:
         var start = flatbuffers.field_vector(
             self._buf, int(self._pos), 8
         ) + i * 4
-        start += int(flatbuffers.indirect(self._buf, start))
+        start += flatbuffers.read_offset_as_int(self._buf, start)
         return TensorDim(self._buf, start)
 
     fn shape_length(self) -> Int:
@@ -584,8 +596,8 @@ struct SparseTensor:
         return Buffer(self._buf, o.take())
 
     @staticmethod
-    fn as_root(buf: DTypePointer[DType.uint8]) -> SparseTensor:
-        return SparseTensor(buf, flatbuffers.indirect(buf, 0))
+    fn as_root(buf: UnsafePointer[UInt8]) -> SparseTensor:
+        return SparseTensor(buf, flatbuffers.read_offset_as_int(buf, 0))
 
     @staticmethod
     fn build(
@@ -597,7 +609,7 @@ struct SparseTensor:
         non_zero_length: Int64 = 0,
         sparseIndex_type: SparseTensorIndex = SparseTensorIndex(0),
         sparseIndex: Optional[flatbuffers.Offset] = None,
-        data: Optional[flatbuffers.Offset] = None,
+        data: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         var _shape: Optional[flatbuffers.Offset] = None
         if len(shape) > 0:
@@ -626,6 +638,10 @@ struct SparseTensor:
             builder.prepend(sparseIndex.value())
             builder.slot(5)
         if data is not None:
-            builder.prepend(data.value())
+            Buffer.build(
+                builder,
+                offset=data.value().offset,
+                length=data.value().length,
+            )
             builder.slot(6)
         return builder.end_object()
