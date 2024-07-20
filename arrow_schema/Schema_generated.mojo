@@ -395,7 +395,7 @@ struct Map:
 
     #  Set to true if the keys within each value are sorted
     fn keysSorted(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 4, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 4, 0)
 
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> Map:
@@ -472,7 +472,7 @@ struct Int_:
         return flatbuffers.field[DType.int32](self._buf, int(self._pos), 4, 0)
 
     fn is_signed(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 6, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 6, 0)
 
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> Int_:
@@ -1107,7 +1107,7 @@ struct DictionaryEncoding:
     #  is used to represent ordered categorical data, and we provide a way to
     #  preserve that metadata here
     fn isOrdered(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 8, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 8, 0)
 
     fn dictionaryKind(self) -> DictionaryKind:
         return flatbuffers.field[DType.int16](self._buf, int(self._pos), 10, 0)
@@ -1155,7 +1155,7 @@ struct Field:
 
     #  Whether or not this field can contain nulls. Should be true in general.
     fn nullable(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 6, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 6, 0)
 
     fn type_type(self) -> Type:
         return flatbuffers.field[DType.uint8](self._buf, int(self._pos), 8, 0)

@@ -24,10 +24,10 @@ def test_building_and_reading_a_footer():
         fields=List(o_field1, o_field2),
     )
 
-    builder.start_vector(24, 2, 8)
-    _ = Block.build(builder, offset=120, metaDataLength=10, bodyLength=200)
-    _ = Block.build(builder, offset=20, metaDataLength=10, bodyLength=100)
-    var o_blocks = builder.end_vector(2)
+    # builder.start_vector(24, 2, 8)
+    # _ = Block.build(builder, offset=120, metaDataLength=10, bodyLength=200)
+    # _ = Block.build(builder, offset=20, metaDataLength=10, bodyLength=100)
+    # var o_blocks = builder.end_vector(2)
 
     var o_md1 = KeyValue.build(
         builder, key=StringRef("a"), value=StringRef("12")
@@ -42,7 +42,7 @@ def test_building_and_reading_a_footer():
     var o_footer = Footer.build(
         builder,
         schema=o_schema,
-        recordBatches=o_blocks,
+        recordBatches=List(BlockVO(100, 10, 20), BlockVO(200, 10, 120)),
         custom_metadata=List(o_md1, o_md2, o_md3),
     )
 

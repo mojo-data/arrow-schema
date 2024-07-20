@@ -97,7 +97,7 @@ struct SparseTensorIndexCOO:
     #  but it is inverse order of SciPy's canonical coo_matrix
     #  (SciPy employs column-major order for its coo_matrix).
     fn isCanonical(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 10, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 10, 0)
 
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> SparseTensorIndexCOO:
@@ -355,11 +355,33 @@ struct SparseTensorIndexCSF:
         inout builder: flatbuffers.Builder,
         *,
         indptrType: Optional[flatbuffers.Offset] = None,
-        indptrBuffers: Optional[flatbuffers.Offset] = None,
+        indptrBuffers: List[BufferVO] = List[BufferVO](),
         indicesType: Optional[flatbuffers.Offset] = None,
-        indicesBuffers: Optional[flatbuffers.Offset] = None,
+        indicesBuffers: List[BufferVO] = List[BufferVO](),
         axisOrder: List[Int32] = List[Int32](),
     ) -> flatbuffers.Offset:
+        var _indptrBuffers: Optional[flatbuffers.Offset] = None
+        if len(indptrBuffers) > 0:
+            builder.start_vector(16, len(indptrBuffers), 8)
+            for o in indptrBuffers.__reversed__():
+                Buffer.build(
+                    builder,
+                    offset=o[].offset,
+                    length=o[].length,
+                )
+            _indptrBuffers = builder.end_vector(len(indptrBuffers))
+
+        var _indicesBuffers: Optional[flatbuffers.Offset] = None
+        if len(indicesBuffers) > 0:
+            builder.start_vector(16, len(indicesBuffers), 8)
+            for o in indicesBuffers.__reversed__():
+                Buffer.build(
+                    builder,
+                    offset=o[].offset,
+                    length=o[].length,
+                )
+            _indicesBuffers = builder.end_vector(len(indicesBuffers))
+
         var _axisOrder: Optional[flatbuffers.Offset] = None
         if len(axisOrder) > 0:
             builder.start_vector(4, len(axisOrder), 4)
@@ -371,14 +393,14 @@ struct SparseTensorIndexCSF:
         if indptrType is not None:
             builder.prepend(indptrType.value())
             builder.slot(0)
-        if indptrBuffers is not None:
-            builder.prepend(indptrBuffers.value())
+        if _indptrBuffers is not None:
+            builder.prepend(_indptrBuffers.value())
             builder.slot(1)
         if indicesType is not None:
             builder.prepend(indicesType.value())
             builder.slot(2)
-        if indicesBuffers is not None:
-            builder.prepend(indicesBuffers.value())
+        if _indicesBuffers is not None:
+            builder.prepend(_indicesBuffers.value())
             builder.slot(3)
         if _axisOrder is not None:
             builder.prepend(_axisOrder.value())

@@ -59,10 +59,34 @@ struct Footer:
         *,
         version: MetadataVersion = MetadataVersion(0),
         schema: Optional[flatbuffers.Offset] = None,
-        dictionaries: Optional[flatbuffers.Offset] = None,
-        recordBatches: Optional[flatbuffers.Offset] = None,
+        dictionaries: List[BlockVO] = List[BlockVO](),
+        recordBatches: List[BlockVO] = List[BlockVO](),
         custom_metadata: List[flatbuffers.Offset] = List[flatbuffers.Offset](),
     ) -> flatbuffers.Offset:
+        var _dictionaries: Optional[flatbuffers.Offset] = None
+        if len(dictionaries) > 0:
+            builder.start_vector(24, len(dictionaries), 8)
+            for o in dictionaries.__reversed__():
+                Block.build(
+                    builder,
+                    offset=o[].offset,
+                    metaDataLength=o[].metaDataLength,
+                    bodyLength=o[].bodyLength,
+                )
+            _dictionaries = builder.end_vector(len(dictionaries))
+
+        var _recordBatches: Optional[flatbuffers.Offset] = None
+        if len(recordBatches) > 0:
+            builder.start_vector(24, len(recordBatches), 8)
+            for o in recordBatches.__reversed__():
+                Block.build(
+                    builder,
+                    offset=o[].offset,
+                    metaDataLength=o[].metaDataLength,
+                    bodyLength=o[].bodyLength,
+                )
+            _recordBatches = builder.end_vector(len(recordBatches))
+
         var _custom_metadata: Optional[flatbuffers.Offset] = None
         if len(custom_metadata) > 0:
             builder.start_vector(4, len(custom_metadata), 4)
@@ -77,11 +101,11 @@ struct Footer:
         if schema is not None:
             builder.prepend(schema.value())
             builder.slot(1)
-        if dictionaries is not None:
-            builder.prepend(dictionaries.value())
+        if _dictionaries is not None:
+            builder.prepend(_dictionaries.value())
             builder.slot(2)
-        if recordBatches is not None:
-            builder.prepend(recordBatches.value())
+        if _recordBatches is not None:
+            builder.prepend(_recordBatches.value())
             builder.slot(3)
         if _custom_metadata is not None:
             builder.prepend(_custom_metadata.value())

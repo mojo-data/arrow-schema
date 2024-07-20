@@ -86,6 +86,12 @@ fn field_string(buf: BufPointer, pos: Int, field_offset: Int) -> StringRef:
     return StringRef(buf.offset(str_pos + 4), int(length))
 
 
+fn string(buf: BufPointer, pos: Int) -> StringRef:
+    var str_pos = int(pos + buf.offset(pos).bitcast[DType.int32]()[0])
+    var length = buf.offset(str_pos).bitcast[DType.int32]()[0]
+    return StringRef(buf.offset(str_pos + 4), int(length))
+
+
 @always_inline
 fn _relative_field_offset(buf: BufPointer, pos: Int, field_offset: Int) -> Int:
     var relativ_vtable_offset = read_offset_as_int(buf, pos)

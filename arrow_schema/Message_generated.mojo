@@ -226,11 +226,33 @@ struct RecordBatch:
         inout builder: flatbuffers.Builder,
         *,
         length: Int64 = 0,
-        nodes: Optional[flatbuffers.Offset] = None,
-        buffers: Optional[flatbuffers.Offset] = None,
+        nodes: List[FieldNodeVO] = List[FieldNodeVO](),
+        buffers: List[BufferVO] = List[BufferVO](),
         compression: Optional[flatbuffers.Offset] = None,
         variadicBufferCounts: List[Int64] = List[Int64](),
     ) -> flatbuffers.Offset:
+        var _nodes: Optional[flatbuffers.Offset] = None
+        if len(nodes) > 0:
+            builder.start_vector(16, len(nodes), 8)
+            for o in nodes.__reversed__():
+                FieldNode.build(
+                    builder,
+                    length=o[].length,
+                    null_count=o[].null_count,
+                )
+            _nodes = builder.end_vector(len(nodes))
+
+        var _buffers: Optional[flatbuffers.Offset] = None
+        if len(buffers) > 0:
+            builder.start_vector(16, len(buffers), 8)
+            for o in buffers.__reversed__():
+                Buffer.build(
+                    builder,
+                    offset=o[].offset,
+                    length=o[].length,
+                )
+            _buffers = builder.end_vector(len(buffers))
+
         var _variadicBufferCounts: Optional[flatbuffers.Offset] = None
         if len(variadicBufferCounts) > 0:
             builder.start_vector(8, len(variadicBufferCounts), 8)
@@ -244,11 +266,11 @@ struct RecordBatch:
         if length != 0:
             builder.prepend(length)
             builder.slot(0)
-        if nodes is not None:
-            builder.prepend(nodes.value())
+        if _nodes is not None:
+            builder.prepend(_nodes.value())
             builder.slot(1)
-        if buffers is not None:
-            builder.prepend(buffers.value())
+        if _buffers is not None:
+            builder.prepend(_buffers.value())
             builder.slot(2)
         if compression is not None:
             builder.prepend(compression.value())
@@ -283,7 +305,7 @@ struct DictionaryBatch:
     #  dictionary with the indicated id. If isDelta is false this dictionary
     #  should replace the existing dictionary.
     fn isDelta(self) -> Scalar[DType.bool]:
-        return flatbuffers.field[DType.int8](self._buf, int(self._pos), 8, 0)
+        return flatbuffers.field[DType.bool](self._buf, int(self._pos), 8, 0)
 
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> DictionaryBatch:
