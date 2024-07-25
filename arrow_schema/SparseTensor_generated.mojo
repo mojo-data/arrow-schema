@@ -83,6 +83,9 @@ struct SparseTensorIndexCOO:
             flatbuffers.field_vector(self._buf, int(self._pos), 6) + i * 8,
         )
 
+    fn has_indicesStrides(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     fn indicesStrides_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 6)
 
@@ -107,9 +110,9 @@ struct SparseTensorIndexCOO:
     fn build(
         inout builder: flatbuffers.Builder,
         *,
-        indicesType: Optional[flatbuffers.Offset] = None,
+        indicesType: flatbuffers.Offset,
+        indicesBuffer: BufferVO,
         indicesStrides: List[Int64] = List[Int64](),
-        indicesBuffer: Optional[BufferVO] = None,
         isCanonical: Scalar[DType.bool] = 0,
     ) -> flatbuffers.Offset:
         var _indicesStrides: Optional[flatbuffers.Offset] = None
@@ -120,19 +123,17 @@ struct SparseTensorIndexCOO:
             _indicesStrides = builder.end_vector(len(indicesStrides))
 
         builder.start_object(4)
-        if indicesType is not None:
-            builder.prepend(indicesType.value())
-            builder.slot(0)
+        builder.prepend(indicesType)
+        builder.slot(0)
         if _indicesStrides is not None:
             builder.prepend(_indicesStrides.value())
             builder.slot(1)
-        if indicesBuffer is not None:
-            Buffer.build(
-                builder,
-                offset=indicesBuffer.value().offset,
-                length=indicesBuffer.value().length,
-            )
-            builder.slot(2)
+        Buffer.build(
+            builder,
+            offset=indicesBuffer.offset,
+            length=indicesBuffer.length,
+        )
+        builder.slot(2)
         if isCanonical != 0:
             builder.prepend(isCanonical)
             builder.slot(3)
@@ -207,38 +208,34 @@ struct SparseMatrixIndexCSX:
     fn build(
         inout builder: flatbuffers.Builder,
         *,
+        indptrType: flatbuffers.Offset,
+        indptrBuffer: BufferVO,
+        indicesType: flatbuffers.Offset,
+        indicesBuffer: BufferVO,
         compressedAxis: SparseMatrixCompressedAxis = SparseMatrixCompressedAxis(
             0
         ),
-        indptrType: Optional[flatbuffers.Offset] = None,
-        indptrBuffer: Optional[BufferVO] = None,
-        indicesType: Optional[flatbuffers.Offset] = None,
-        indicesBuffer: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         builder.start_object(5)
         if compressedAxis != SparseMatrixCompressedAxis(0):
             builder.prepend(compressedAxis.value)
             builder.slot(0)
-        if indptrType is not None:
-            builder.prepend(indptrType.value())
-            builder.slot(1)
-        if indptrBuffer is not None:
-            Buffer.build(
-                builder,
-                offset=indptrBuffer.value().offset,
-                length=indptrBuffer.value().length,
-            )
-            builder.slot(2)
-        if indicesType is not None:
-            builder.prepend(indicesType.value())
-            builder.slot(3)
-        if indicesBuffer is not None:
-            Buffer.build(
-                builder,
-                offset=indicesBuffer.value().offset,
-                length=indicesBuffer.value().length,
-            )
-            builder.slot(4)
+        builder.prepend(indptrType)
+        builder.slot(1)
+        Buffer.build(
+            builder,
+            offset=indptrBuffer.offset,
+            length=indptrBuffer.length,
+        )
+        builder.slot(2)
+        builder.prepend(indicesType)
+        builder.slot(3)
+        Buffer.build(
+            builder,
+            offset=indicesBuffer.offset,
+            length=indicesBuffer.length,
+        )
+        builder.slot(4)
         return builder.end_object()
 
 
@@ -354,11 +351,11 @@ struct SparseTensorIndexCSF:
     fn build(
         inout builder: flatbuffers.Builder,
         *,
-        indptrType: Optional[flatbuffers.Offset] = None,
-        indptrBuffers: List[BufferVO] = List[BufferVO](),
-        indicesType: Optional[flatbuffers.Offset] = None,
-        indicesBuffers: List[BufferVO] = List[BufferVO](),
-        axisOrder: List[Int32] = List[Int32](),
+        indptrType: flatbuffers.Offset,
+        indptrBuffers: List[BufferVO],
+        indicesType: flatbuffers.Offset,
+        indicesBuffers: List[BufferVO],
+        axisOrder: List[Int32],
     ) -> flatbuffers.Offset:
         var _indptrBuffers: Optional[flatbuffers.Offset] = None
         if len(indptrBuffers) > 0:
@@ -390,15 +387,13 @@ struct SparseTensorIndexCSF:
             _axisOrder = builder.end_vector(len(axisOrder))
 
         builder.start_object(5)
-        if indptrType is not None:
-            builder.prepend(indptrType.value())
-            builder.slot(0)
+        builder.prepend(indptrType)
+        builder.slot(0)
         if _indptrBuffers is not None:
             builder.prepend(_indptrBuffers.value())
             builder.slot(1)
-        if indicesType is not None:
-            builder.prepend(indicesType.value())
-            builder.slot(2)
+        builder.prepend(indicesType)
+        builder.slot(2)
         if _indicesBuffers is not None:
             builder.prepend(_indicesBuffers.value())
             builder.slot(3)
@@ -625,13 +620,13 @@ struct SparseTensor:
     fn build(
         inout builder: flatbuffers.Builder,
         *,
+        type: flatbuffers.Offset,
+        shape: List[flatbuffers.Offset],
+        sparseIndex: flatbuffers.Offset,
+        data: BufferVO,
         type_type: Type = Type(0),
-        type: Optional[flatbuffers.Offset] = None,
-        shape: List[flatbuffers.Offset] = List[flatbuffers.Offset](),
         non_zero_length: Int64 = 0,
         sparseIndex_type: SparseTensorIndex = SparseTensorIndex(0),
-        sparseIndex: Optional[flatbuffers.Offset] = None,
-        data: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         var _shape: Optional[flatbuffers.Offset] = None
         if len(shape) > 0:
@@ -644,9 +639,8 @@ struct SparseTensor:
         if type_type != Type(0):
             builder.prepend(type_type.value)
             builder.slot(0)
-        if type is not None:
-            builder.prepend(type.value())
-            builder.slot(1)
+        builder.prepend(type)
+        builder.slot(1)
         if _shape is not None:
             builder.prepend(_shape.value())
             builder.slot(2)
@@ -656,14 +650,12 @@ struct SparseTensor:
         if sparseIndex_type != SparseTensorIndex(0):
             builder.prepend(sparseIndex_type.value)
             builder.slot(4)
-        if sparseIndex is not None:
-            builder.prepend(sparseIndex.value())
-            builder.slot(5)
-        if data is not None:
-            Buffer.build(
-                builder,
-                offset=data.value().offset,
-                length=data.value().length,
-            )
-            builder.slot(6)
+        builder.prepend(sparseIndex)
+        builder.slot(5)
+        Buffer.build(
+            builder,
+            offset=data.offset,
+            length=data.length,
+        )
+        builder.slot(6)
         return builder.end_object()

@@ -26,6 +26,9 @@ struct Footer:
         ) + i * 24
         return Block(self._buf, start)
 
+    fn has_dictionaries(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 8)
+
     fn dictionaries_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 8)
 
@@ -34,6 +37,9 @@ struct Footer:
             self._buf, int(self._pos), 10
         ) + i * 24
         return Block(self._buf, start)
+
+    fn has_recordBatches(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 10)
 
     fn recordBatches_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 10)
@@ -45,6 +51,9 @@ struct Footer:
         ) + i * 4
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
+
+    fn has_custom_metadata(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 12)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)

@@ -19,6 +19,9 @@ struct TensorDim:
     fn name(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
 
+    fn has_name(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> TensorDim:
         return TensorDim(buf, flatbuffers.read_offset_as_int(buf, 0))
@@ -228,6 +231,9 @@ struct Tensor:
             flatbuffers.field_vector(self._buf, int(self._pos), 10) + i * 8,
         )
 
+    fn has_strides(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 10)
+
     fn strides_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 10)
 
@@ -244,11 +250,11 @@ struct Tensor:
     fn build(
         inout builder: flatbuffers.Builder,
         *,
+        type: flatbuffers.Offset,
+        shape: List[flatbuffers.Offset],
+        data: BufferVO,
         type_type: Type = Type(0),
-        type: Optional[flatbuffers.Offset] = None,
-        shape: List[flatbuffers.Offset] = List[flatbuffers.Offset](),
         strides: List[Int64] = List[Int64](),
-        data: Optional[BufferVO] = None,
     ) -> flatbuffers.Offset:
         var _shape: Optional[flatbuffers.Offset] = None
         if len(shape) > 0:
@@ -268,20 +274,18 @@ struct Tensor:
         if type_type != Type(0):
             builder.prepend(type_type.value)
             builder.slot(0)
-        if type is not None:
-            builder.prepend(type.value())
-            builder.slot(1)
+        builder.prepend(type)
+        builder.slot(1)
         if _shape is not None:
             builder.prepend(_shape.value())
             builder.slot(2)
         if _strides is not None:
             builder.prepend(_strides.value())
             builder.slot(3)
-        if data is not None:
-            Buffer.build(
-                builder,
-                offset=data.value().offset,
-                length=data.value().length,
-            )
-            builder.slot(4)
+        Buffer.build(
+            builder,
+            offset=data.offset,
+            length=data.length,
+        )
+        builder.slot(4)
         return builder.end_object()

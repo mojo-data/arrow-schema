@@ -29,6 +29,15 @@ fn field[
     return buf.offset(int(pos) + relativ_value_offset).bitcast[T]()[0]
 
 
+fn field[
+    T: DType
+](buf: BufPointer, pos: Int, field_offset: Int,) -> Optional[Scalar[T]]:
+    var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
+    if relativ_value_offset == 0:
+        return None
+    return buf.offset(int(pos) + relativ_value_offset).bitcast[T]()[0]
+
+
 fn field_table(buf: BufPointer, pos: Int, field_offset: Int) -> Optional[Int]:
     var relativ_value_offset = _relative_field_offset(buf, pos, field_offset)
     if relativ_value_offset == 0:
@@ -71,6 +80,10 @@ fn field_vector_len(buf: BufPointer, pos: Int, field_offset: Int) -> Int:
         + buf.offset(pos + relativ_value_offset).bitcast[DType.int32]()[0]
     )
     return int(buf.offset(vec_pos).bitcast[DType.int32]()[0])
+
+
+fn has_field(buf: BufPointer, pos: Int, field_offset: Int) -> Bool:
+    return _relative_field_offset(buf, pos, field_offset) > 0
 
 
 fn field_string(buf: BufPointer, pos: Int, field_offset: Int) -> StringRef:

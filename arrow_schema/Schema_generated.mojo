@@ -432,6 +432,9 @@ struct Union:
             flatbuffers.field_vector(self._buf, int(self._pos), 6) + i * 4,
         )
 
+    fn has_typeIds(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     fn typeIds_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 6)
 
@@ -965,6 +968,9 @@ struct Timestamp:
     fn timezone(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
 
+    fn has_timezone(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> Timestamp:
         return Timestamp(buf, flatbuffers.read_offset_as_int(buf, 0))
@@ -1050,8 +1056,14 @@ struct KeyValue:
     fn key(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 4)
 
+    fn has_key(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 4)
+
     fn value(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 6)
+
+    fn has_value(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
 
     @staticmethod
     fn as_root(buf: UnsafePointer[UInt8]) -> KeyValue:
@@ -1152,6 +1164,9 @@ struct Field:
     #  Name is not required, in i.e. a List
     fn name(self) -> StringRef:
         return flatbuffers.field_string(self._buf, int(self._pos), 4)
+
+    fn has_name(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 4)
 
     #  Whether or not this field can contain nulls. Should be true in general.
     fn nullable(self) -> Scalar[DType.bool]:
@@ -1333,6 +1348,9 @@ struct Field:
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return Field(self._buf, start)
 
+    fn has_children(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 14)
+
     fn children_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 14)
 
@@ -1343,6 +1361,9 @@ struct Field:
         ) + i * 4
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
+
+    fn has_custom_metadata(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 16)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 16)
@@ -1463,6 +1484,9 @@ struct Schema:
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return Field(self._buf, start)
 
+    fn has_fields(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     fn fields_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 6)
 
@@ -1473,6 +1497,9 @@ struct Schema:
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
 
+    fn has_custom_metadata(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 8)
+
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 8)
 
@@ -1482,6 +1509,9 @@ struct Schema:
             self._buf,
             flatbuffers.field_vector(self._buf, int(self._pos), 10) + i * 8,
         )
+
+    fn has_features(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 10)
 
     fn features_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 10)

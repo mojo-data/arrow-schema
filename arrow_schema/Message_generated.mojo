@@ -169,6 +169,9 @@ struct RecordBatch:
         ) + i * 16
         return FieldNode(self._buf, start)
 
+    fn has_nodes(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 6)
+
     fn nodes_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 6)
 
@@ -183,6 +186,9 @@ struct RecordBatch:
             self._buf, int(self._pos), 8
         ) + i * 16
         return Buffer(self._buf, start)
+
+    fn has_buffers(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 8)
 
     fn buffers_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 8)
@@ -213,6 +219,9 @@ struct RecordBatch:
             self._buf,
             flatbuffers.field_vector(self._buf, int(self._pos), 12) + i * 8,
         )
+
+    fn has_variadicBufferCounts(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 12)
 
     fn variadicBufferCounts_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
@@ -382,6 +391,9 @@ struct Message:
         ) + i * 4
         start += flatbuffers.read_offset_as_int(self._buf, start)
         return KeyValue(self._buf, start)
+
+    fn has_custom_metadata(self) -> Bool:
+        return flatbuffers.has_field(self._buf, int(self._pos), 12)
 
     fn custom_metadata_length(self) -> Int:
         return flatbuffers.field_vector_len(self._buf, int(self._pos), 12)
